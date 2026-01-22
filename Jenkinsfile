@@ -12,7 +12,8 @@ pipeline {
 
     stage('Unit Tests') {
       steps {
-        sh './mvnw test'
+        sh 'mvn clean test -Dspring.profiles.active=default'
+
       }
     }
 
