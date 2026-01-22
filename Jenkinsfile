@@ -1,6 +1,13 @@
 pipeline {
   agent any
 
+  environment {
+    AWS_REGION     = 'us-east-1'
+    AWS_ACCOUNT_ID = '079662785620'
+    ECR_REPO       = 'spring-petclinic'
+    IMAGE_TAG      = "${BUILD_NUMBER}"
+  }
+
   stages {
 
     stage('Checkout') {
@@ -42,7 +49,9 @@ pipeline {
 
     stage('Docker Build') {
       steps {
-        sh 'docker build -t spring-petclinic:latest .'
+        sh '''
+          docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+        '''
       }
     }
 
@@ -52,7 +61,7 @@ pipeline {
           trivy image \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
-            spring-petclinic:latest
+            ${ECR_REPO}:${IMAGE_TAG}
         '''
       }
     }
@@ -61,25 +70,25 @@ pipeline {
       steps {
         sh '''
           echo "🔐 Logging in to Amazon ECR..."
-          aws ecr get-login-password --region us-east-1 \
+          aws ecr get-login-password --region ${AWS_REGION} \
           | docker login --username AWS \
-            --password-stdin 079662785620.dkr.ecr.us-east-1.amazonaws.com
+            --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
           echo "🏷️ Tagging Docker image..."
-          docker tag spring-petclinic:latest \
-            079662785620.dkr.ecr.us-east-1.amazonaws.com/spring-petclinic:latest
+          docker tag ${ECR_REPO}:${IMAGE_TAG} \
+            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
 
           echo "🚀 Pushing image to ECR..."
-          docker push 079662785620.dkr.ecr.us-east-1.amazonaws.com/spring-petclinic:latest
+          docker push \
+            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
         '''
       }
     }
-
   }
 
   post {
     always {
-      echo "✅ Spring PetClinic pipeline completed"
+      echo "✅ Spring PetClinic pipeline completed successfully"
     }
   }
 }
