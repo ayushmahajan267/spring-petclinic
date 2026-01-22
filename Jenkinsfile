@@ -89,20 +89,21 @@ pipeline {
       steps {
         sshagent(['petclinic-ec2-ssh']) {
           sh """
-          ssh -o StrictHostKeyChecking=no ubuntu@34.198.128.20 << EOF
-            docker stop petclinic-app || true
-            docker rm petclinic-app || true
-            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
-            docker run -d \
-              -p 8080:8080 \
-              --name petclinic-app \
-              --memory="2g" \
-              ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
-          EOF
+            ssh -o StrictHostKeyChecking=no ubuntu@34.198.128.20 '
+              docker stop petclinic-app || true
+              docker rm petclinic-app || true
+              docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+              docker run -d \
+                -p 8080:8080 \
+                --name petclinic-app \
+                --memory="2g" \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+            '
           """
         }
       }
     }
+
   }
 
   post {
