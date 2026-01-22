@@ -22,11 +22,13 @@ pipeline {
         withSonarQubeEnv('SonarQube') {
           script {
             def scannerHome = tool 'SonarScanner'
-            sh """
+             sh """
               ${scannerHome}/bin/sonar-scanner \
               -Dsonar.projectKey=spring-petclinic \
-              -Dsonar.sources=src
+              -Dsonar.sources=src/main/java \
+              -Dsonar.java.binaries=target/classes
             """
+
           }
         }
       }
