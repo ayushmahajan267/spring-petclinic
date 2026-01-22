@@ -16,19 +16,17 @@ pipeline {
       }
     }
 
-
     stage('SonarQube SAST') {
       steps {
         withSonarQubeEnv('SonarQube') {
           script {
             def scannerHome = tool 'SonarScanner'
-             sh """
+            sh """
               ${scannerHome}/bin/sonar-scanner \
               -Dsonar.projectKey=spring-petclinic \
               -Dsonar.sources=src/main/java \
               -Dsonar.java.binaries=target/classes
             """
-
           }
         }
       }
@@ -58,8 +56,8 @@ pipeline {
         '''
       }
     }
-  }
-   stage('Push Image to AWS ECR') {
+
+    stage('Push Image to AWS ECR') {
       steps {
         sh '''
           echo "🔐 Logging in to Amazon ECR..."
@@ -76,7 +74,9 @@ pipeline {
         '''
       }
     }
+
   }
+
   post {
     always {
       echo "✅ Spring PetClinic pipeline completed"
