@@ -84,7 +84,7 @@ pipeline {
         """
       }
     }
-  }
+  
     stage('CD - Deploy to EC2') {
       steps {
         sshagent(['petclinic-ec2-ssh']) {
@@ -102,8 +102,8 @@ pipeline {
           """
         }
       }
-    } 
-
+    }
+  }
 
   post {
     always {
