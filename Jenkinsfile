@@ -26,15 +26,12 @@ pipeline {
     stage('SonarQube SAST') {
       steps {
         withSonarQubeEnv('SonarQube') {
-          script {
-            def scannerHome = tool 'SonarScanner'
-            sh """
-              ${scannerHome}/bin/sonar-scanner \
-              -Dsonar.projectKey=spring-petclinic \
-              -Dsonar.sources=src/main/java \
-              -Dsonar.java.binaries=target/classes
-            """
-          }
+          sh """
+            sonar-scanner \
+            -Dsonar.projectKey=spring-petclinic \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.java.binaries=target/classes
+          """
         }
       }
     }
@@ -68,34 +65,27 @@ pipeline {
 
     stage('Push Image to AWS ECR') {
       steps {
-        withCredentials([
-          [$class: 'AmazonWebServicesCredentialsBinding',
-           credentialsId: 'aws-ecr-creds']
-        ]) {
-          sh """
-            aws ecr get-login-password --region ${AWS_REGION} \
-            | docker login --username AWS \
-              --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+        sh """
+          aws ecr get-login-password --region ${AWS_REGION} \
+          | docker login --username AWS \
+            --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-            docker tag ${ECR_REPO}:${IMAGE_TAG} \
-              ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+          docker tag ${ECR_REPO}:${IMAGE_TAG} \
+            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
 
-            docker tag ${ECR_REPO}:${IMAGE_TAG} \
-              ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+          docker tag ${ECR_REPO}:${IMAGE_TAG} \
+            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
 
-            docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
-            docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
-          """
-        }
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+        """
       }
-    }
-
-  }   // closes stages
-
-  post {
-    always {
-      echo "✅ Spring PetClinic pipeline completed successfully"
     }
   }
 
-}     // closes pipeline
+  post {
+    always {
+      echo "✅ Spring PetClinic CI + DevSecOps pipeline completed successfully"
+    }
+  }
+}
