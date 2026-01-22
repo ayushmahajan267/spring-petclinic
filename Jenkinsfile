@@ -26,12 +26,15 @@ pipeline {
     stage('SonarQube SAST') {
       steps {
         withSonarQubeEnv('SonarQube') {
-          sh """
-            sonar-scanner \
-            -Dsonar.projectKey=spring-petclinic \
-            -Dsonar.sources=src/main/java \
-            -Dsonar.java.binaries=target/classes
-          """
+          script {
+            def scannerHome = tool 'SonarScanner'
+            sh """
+              ${scannerHome}/bin/sonar-scanner \
+              -Dsonar.projectKey=spring-petclinic \
+              -Dsonar.sources=src/main/java \
+              -Dsonar.java.binaries=target/classes
+            """
+          }
         }
       }
     }
