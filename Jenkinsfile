@@ -66,25 +66,26 @@ pipeline {
       }
     }
 
-    stage('Push Image to AWS ECR') {
+     stage('Push Image to AWS ECR') {
       steps {
-        sh '''
-          echo "🔐 Logging in to Amazon ECR..."
-          aws ecr get-login-password --region ${AWS_REGION} \
-          | docker login --username AWS \
-            --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-
-          echo "🏷️ Tagging Docker image..."
-          docker tag ${ECR_REPO}:${IMAGE_TAG} \
-            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
-
-          echo "🚀 Pushing image to ECR..."
-          docker push \
-            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
-        '''
+        withCredentials([
+          [$class: 'AmazonWebServicesCredentialsBinding',
+           credentialsId: 'aws-ecr-creds']
+        ]) {
+          sh '''
+            aws ecr get-login-password --region us-east-1 \
+            | docker login --username AWS \
+              --password-stdin 079662785620.dkr.ecr.us-east-1.amazonaws.com
+    
+            docker tag spring-petclinic:${BUILD_NUMBER} \
+              079662785620.dkr.ecr.us-east-1.amazonaws.com/spring-petclinic:${BUILD_NUMBER}
+    
+            docker push 079662785620.dkr.ecr.us-east-1.amazonaws.com/spring-petclinic:${BUILD_NUMBER}
+          '''
+        }
       }
     }
-  }
+
 
   post {
     always {
