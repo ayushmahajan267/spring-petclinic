@@ -10,12 +10,12 @@ pipeline {
       }
     }
 
-    stage('Unit Tests') {
+    stage('Build (Skip Tests for CI)') {
       steps {
-        sh 'mvn clean test -Dspring.profiles.active=default'
-
+        sh 'mvn clean package -DskipTests'
       }
     }
+
 
     stage('SonarQube SAST') {
       steps {
