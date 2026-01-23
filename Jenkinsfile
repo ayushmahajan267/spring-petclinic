@@ -103,7 +103,9 @@ pipeline {
                 fi
   
                 echo "Deploying $NEW on port $NEW_PORT"
-  
+                
+                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 079662785620.dkr.ecr.us-east-1.amazonaws.com
+                
                 docker pull $IMAGE
                 docker stop petclinic-$NEW || true
                 docker rm petclinic-$NEW || true
