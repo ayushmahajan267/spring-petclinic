@@ -107,9 +107,17 @@ pipeline {
                 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 079662785620.dkr.ecr.us-east-1.amazonaws.com
                 
                 docker pull $IMAGE
-                docker stop petclinic-$NEW || true
-                docker rm petclinic-$NEW || true
-  
+                
+                echo "Checking if port $NEW_PORT is already in use..."
+
+                EXISTING_CONTAINER=$(docker ps --filter "publish=$NEW_PORT" --format "{{.Names}}")
+                
+                if [ -n "$EXISTING_CONTAINER" ]; then
+                  echo "Port $NEW_PORT is used by $EXISTING_CONTAINER. Stopping it..."
+                  docker stop $EXISTING_CONTAINER
+                  docker rm $EXISTING_CONTAINER
+                fi
+
                 docker run -d \
                   --name petclinic-$NEW \
                   --restart unless-stopped \
