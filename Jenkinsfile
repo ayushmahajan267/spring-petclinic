@@ -84,7 +84,50 @@ pipeline {
         """
       }
     }
+    stage('Blue-Green Deployment') {
+      steps {
+          sshagent(['deploy-ec2-ssh']) {
+              sh '''
+              ssh ubuntu@172.31.21.49 '
+                set -e
   
+                IMAGE=079662785620.dkr.ecr.us-east-1.amazonaws.com/spring-petclinic:latest
+                ACTIVE=$(cat /etc/petclinic-active | cut -d= -f2)
+  
+                if [ "$ACTIVE" = "BLUE" ]; then
+                  NEW=GREEN
+                  NEW_PORT=8082
+                else
+                  NEW=BLUE
+                  NEW_PORT=8081
+                fi
+  
+                echo "Deploying $NEW on port $NEW_PORT"
+  
+                docker pull $IMAGE
+                docker stop petclinic-$NEW || true
+                docker rm petclinic-$NEW || true
+  
+                docker run -d \
+                  --name petclinic-$NEW \
+                  --restart unless-stopped \
+                  -p $NEW_PORT:8080 \
+                  $IMAGE
+  
+                sleep 20
+  
+                curl -f http://localhost:$NEW_PORT/actuator/health
+  
+                sudo sed -i "s/server 127.0.0.1:808[12];/server 127.0.0.1:$NEW_PORT;/" /etc/nginx/sites-available/default
+                sudo systemctl reload nginx
+  
+                echo ACTIVE=$NEW | sudo tee /etc/petclinic-active
+              '
+              '''
+          }
+      }
+    }
+
     stage('CD - Deploy to EC2') {
       steps {
         sshagent(['petclinic-ec2-ssh']) {
