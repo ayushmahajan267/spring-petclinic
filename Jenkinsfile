@@ -108,15 +108,14 @@ pipeline {
                 
                 docker pull $IMAGE
                 
-                echo "Checking if port $NEW_PORT is already in use..."
+                echo "Checking if petclinic-$NEW container already exists..."
 
-                EXISTING_CONTAINER=$(docker ps --filter "publish=$NEW_PORT" --format "{{.Names}}")
-                
-                if [ -n "$EXISTING_CONTAINER" ]; then
-                  echo "Port $NEW_PORT is used by $EXISTING_CONTAINER. Stopping it..."
-                  docker stop $EXISTING_CONTAINER
-                  docker rm $EXISTING_CONTAINER
+                if docker ps -a --format '{{.Names}}' | grep -q "^petclinic-$NEW$"; then
+                  echo "Stopping existing petclinic-$NEW container"
+                  docker stop petclinic-$NEW || true
+                  docker rm petclinic-$NEW || true
                 fi
+
 
                 docker run -d \
                   --name petclinic-$NEW \
